@@ -1,0 +1,14 @@
+.nal-struct-container {
+  .nal-struct-title {
+    padding: 8px;
+    margin: 0;
+    background-color: #f3f3f3;
+  }
+  .ant-tree {
+    max-width: 96%;
+  }
+  .tree-node-item {
+    display: flex;
+    justify-content: space-between;
+  }
+}

@@ -1,0 +1,36 @@
+.analyse-mp4 {
+  padding-top: 12px;
+  .card-upload {
+    width: 500px;
+    display: block;
+    margin: 60px auto 0;
+  }
+  .analyse-button-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 24px;
+    .filename {
+      margin-right: 24px;
+    }
+    .reselect-file {
+      margin-left: 24px;
+    }
+    &.change-style {
+      padding-left: 12px;
+      justify-content: left;
+      margin-bottom: 36px;
+    }
+  }
+  .analyse-data-container {
+    border: 2px solid #f1f1f1;
+    padding-left: 16px;
+    padding-right: 16px;
+    & > .ant-col {
+      padding: 0 !important;
+    }
+    .nalu-tree-container {
+      border-left: 2px solid #f1f1f1;
+    }
+  }
+}
