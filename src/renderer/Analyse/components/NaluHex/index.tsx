@@ -3,11 +3,11 @@
  */
 
 import { useMemo } from "react";
-import { AnalyseMediaDataItem } from '../NaluTree';
+import { NaluDataStruct } from '../../../types/h264-analyse-result';
 import './index.scss';
 
 interface Props {
-  data: AnalyseMediaDataItem
+  data: NaluDataStruct
 }
 
 export default function NaluHex (props: Props) {

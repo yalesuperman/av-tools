@@ -2,49 +2,57 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Button, Upload, Row, Col, Table, TableColumnsType } from 'antd';
 import { InboxOutlined } from "@ant-design/icons";
 import './index.scss';
-import { NalUnitTypesDescriptionMap } from '../types/nal-unit-types';
-import NaluTree, { AnalyseMediaDataItem } from './components/NaluTree';
+import { NalUnitTypes, NalUnitTypesDescriptionMap } from '../types/nal-unit-types';
+import NaluTree from './components/NaluTree';
 import NaluHex from './components/NaluHex';
 import { add_prefix_zero_bit } from "../utils/hadle-binary";
+import { H264AnalyseResult, NaluDataStruct } from '../types/h264-analyse-result';
+import { handleSPS } from "../utils/parse-sps";
 
 const { Dragger } = Upload;
 
 export default function AnalyseMp4() {
   const [fileList, setFileList] = useState<any[]>([]);
-  const [listData, setListData] = useState<AnalyseMediaDataItem[]>([]);
+  const [h264AnalyseResult, setH264AnalyseResult] = useState<H264AnalyseResult>();
   const [analyseStatus, setAnalyseStatus] = useState<'start' | 'analysing' | 'done'>();
-  const [currentNALData, setCurrentNALData] = useState<AnalyseMediaDataItem>({
-    address: '',
+  const [currentNALData, setCurrentNALData] = useState<NaluDataStruct>({
     offset: '',
-    nal_type: '',
+    nal_type: 0,
     data: [],
     nal_size: 0
   });
   const [firstAnalayseFlag, setFirstAnalayseFlag] = useState<boolean>(true);
+  const [spsParseResult, setSpsParseResult] = useState<any>()
 
   const onStartAnalyse = useCallback(async () => {
-    console.log(fileList, fileList[0].path)
     setAnalyseStatus('analysing');
     const reslut = await window.ffmpeg.analyseMp4(fileList[0].path);
-    const data: AnalyseMediaDataItem[] = JSON.parse(reslut);
+    const parseResult: H264AnalyseResult = JSON.parse(reslut);
+
+    console.log('h264AnalyseResult',parseResult);
     let offset = 0;
-    data.forEach(item => {
+    parseResult.data.forEach(item => {
       const hex = offset.toString(16).toUpperCase();
       item.offset = `0x${  add_prefix_zero_bit(hex, 16 - hex.length)}`;
       offset += item.nal_size;
     });
-    setListData(data);
+
+    const spsNalu = parseResult.data.find(item => item.nal_type === NalUnitTypes.H264_NAL_SPS);
+    if (spsNalu) {
+      setSpsParseResult(handleSPS(spsNalu.data));
+    }
+
+    setH264AnalyseResult(parseResult);
     setAnalyseStatus('done');
     setFirstAnalayseFlag(false);
   }, [fileList])
 
-  const onViewNALData = useCallback((NALData: AnalyseMediaDataItem) => {
+  const onViewNALData = useCallback((NALData: NaluDataStruct) => {
     console.log(NALData);
-    console.log(listData);
     setCurrentNALData(NALData);
-  }, [listData])
+  }, [])
 
-  const columns: TableColumnsType<AnalyseMediaDataItem> = useMemo(() => [
+  const columns: TableColumnsType<NaluDataStruct> = useMemo(() => [
     {
       title: 'Offset',
       dataIndex: 'offset',
@@ -110,13 +118,13 @@ export default function AnalyseMp4() {
       }
     </div>
     {
-      !!listData.length && <>
+      !!h264AnalyseResult?.data?.length && <>
         <Row className="analyse-data-container" gutter={16}>
           <Col span={12}>
-            <Table rowKey='offset' pagination={false} scroll={{ x: 500, y: 400 }} virtual columns={columns} dataSource={listData} size="small" />
+            <Table rowKey='offset' pagination={false} scroll={{ x: 500, y: 400 }} virtual columns={columns} dataSource={h264AnalyseResult.data} size="small" />
           </Col>
           <Col className="nalu-tree-container" span={12} style={{color: '#000'}} >
-            <NaluTree data={currentNALData}/>
+            <NaluTree data={currentNALData} spsParseResult={spsParseResult}/>
           </Col>
         </Row>
         <NaluHex data={currentNALData}/>

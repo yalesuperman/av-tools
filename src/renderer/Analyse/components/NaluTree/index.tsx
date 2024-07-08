@@ -5,21 +5,16 @@ import { handleSPS } from '../../../utils/parse-sps';
 import { handlePPS } from '../../../utils/parse-pps';
 import { getNaluCommonStruct } from '../../../utils/parse-nalu-common';
 import './index.scss';
-
-export type AnalyseMediaDataItem = {
-  address: string;
-  offset: string;
-  nal_type: string;
-  nal_size: number; // 字节数量
-  data: number[]
-}
+import { NaluDataStruct } from '../../../types/h264-analyse-result';
+import { Propery } from '../../../types/parse-nalu';
 
 interface Props {
-  data: AnalyseMediaDataItem
+  data: NaluDataStruct,
+  spsParseResult: Propery[];
 }
 
 export default function NaluTree(props: Props) {
-  const { data } = props;
+  const { data, spsParseResult } = props;
 
   /**
  * 将data.data的Ebsp数据转换成rbsp数据
@@ -49,13 +44,13 @@ export default function NaluTree(props: Props) {
         temp = handleSPS(rbspData);
         break;
       case NalUnitTypes.H264_NAL_PPS:
-        temp = handlePPS(rbspData);
+        temp = handlePPS(rbspData, spsParseResult);
         break;
       default:
         temp =  getNaluCommonStruct(rbspData);
     }
     return temp;
-  }, [data.nal_type, rbspData]);
+  }, [data.nal_type, rbspData, spsParseResult]);
 
   const onSelect = useCallback(() => {
     console.log('onSelect');

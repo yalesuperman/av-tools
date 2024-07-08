@@ -10,7 +10,8 @@
  */
 export function add_prefix_zero_bit(binaryString: string, count: number) {
   for (let i = 0; i < count; i++) {
-    binaryString = '0' + binaryString;
+    // eslint-disable-next-line no-param-reassign
+    binaryString = `0${  binaryString}`;
   }
   return binaryString;
 }
