@@ -8,6 +8,7 @@ export type NaluDataStruct = {
   nal_type: number;
   /** 字节数量 */
   nal_size: number;
+  pict_type?: string;
   /** nalu数据组成的数组 */
   data: number[]
 }

@@ -1,7 +1,7 @@
 import { get_n_bits } from './operate-n-bits';
 import { get_ue_golomb } from './golomb';
 import { h2645_pixel_aspect } from './h2645-data';
-import { Propery } from '../types/parse-nalu';
+import { Property } from '../types/parse-nalu';
 import { generateUUID } from './generate-uuid';
 
 /**
@@ -11,9 +11,9 @@ import { generateUUID } from './generate-uuid';
  * @param param nalu: number[]; readBitIndex: number; 注：readBitIndex 开始读取nalu的下标
  * @returns
  */
-export function parse_h2645_common_vui_params(params:  { nalu: number[]; readBitIndex: number; }): Propery[] {
-  const common_vui_parameters: Propery[] = [];
-  let tempData: Omit<Propery, 'value'> & { value: number };
+export function parse_h2645_common_vui_params(params:  { nalu: number[]; readBitIndex: number; }): Property[] {
+  const common_vui_parameters: Property[] = [];
+  let tempData: Omit<Property, 'value'> & { value: number };
 
   const aspect_ratio_info_present_flag = get_n_bits(params, 1, 'aspect_ratio_info_present_flag');
   aspect_ratio_info_present_flag.children = [];
@@ -93,7 +93,7 @@ export function parse_h2645_common_vui_params(params:  { nalu: number[]; readBit
   chroma_loc_info_present_flag.children = [];
   common_vui_parameters.push(chroma_loc_info_present_flag);
 
-  const chroma_location: Propery = {
+  const chroma_location: Property = {
     key: generateUUID(),
     value: 0,
     title: 'chroma_location',

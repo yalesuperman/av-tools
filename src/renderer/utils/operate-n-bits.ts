@@ -3,7 +3,7 @@
  */
 import { add_prefix_zero_bit } from './hadle-binary';
 import { generateUUID } from './generate-uuid';
-import { Propery } from '../types/parse-nalu';
+import { Property } from '../types/parse-nalu';
 
 /**
  * 跳过n个bit的读取
@@ -23,7 +23,7 @@ export function skip_n_bits(param: { nalu: number[]; readBitIndex: number; }, n:
  * @param n 跳过的位数
  * @returns
  */
-export function get_n_bits(param: { nalu: number[]; readBitIndex: number; }, n: number, title: string): Omit<Propery, 'value'> & { value: number } {
+export function get_n_bits(param: { nalu: number[]; readBitIndex: number; }, n: number, title: string): Omit<Property, 'value'> & { value: number } {
   let readBitIndex = param.readBitIndex;
   let i;
   let binaryString = '';
@@ -33,12 +33,10 @@ export function get_n_bits(param: { nalu: number[]; readBitIndex: number; }, n: 
   for (i = 0; i < readByteNum; i++) {
     // 判断是否数组读取已经超出了数组的大小
     if ((startBytes + i) >= param.nalu.length) break;
-    
+
     const tempBinaryString = param.nalu[startBytes + i].toString(2);
     binaryString += add_prefix_zero_bit(tempBinaryString, 8 - tempBinaryString.length);
   }
-
-  console.log(binaryString, 'binaryString')
 
   readBitIndex += n;
 

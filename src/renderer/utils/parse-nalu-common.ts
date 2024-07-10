@@ -1,4 +1,5 @@
 import { generateUUID } from "./generate-uuid";
+import { Property  } from '../types/parse-nalu';
 
 export function getNaluCommonStruct(nalu: number[]) {
   return [
@@ -24,4 +25,23 @@ export function getNaluCommonStruct(nalu: number[]) {
       title: 'nal_unit_type'
     },
   ]
+}
+
+/**
+ * 从解析好的NAL树形数据结构中查找某个title的数据
+ * @param nalTreeData 
+ * @param propertyTitle 
+ * @returns 
+ */
+export function findNALTreeProperty(nalTreeData: Property[], propertyTitle: string): Property | -1 {
+  for (let i = 0; i < nalTreeData.length; i++) {
+    if (nalTreeData[i].children) {
+      const result: Property | -1 = findNALTreeProperty(nalTreeData[i].children as Property[], propertyTitle);
+      if (result !== -1) return result;
+    }
+    if (nalTreeData[i].title === propertyTitle) {
+      return nalTreeData[i];
+    }
+  }
+  return -1;
 }

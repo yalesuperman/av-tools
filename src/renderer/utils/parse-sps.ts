@@ -2,14 +2,14 @@
  * 对类型为SPS的NAL Unit的数据进行解析，解析出字节所表示的含义
  */
 import { generateUUID } from './generate-uuid';
-import { Propery } from '../types/parse-nalu';
+import { Property } from '../types/parse-nalu';
 import { get_ue_golomb, get_se_golomb, get_ue_golomb_long } from './golomb';
 import { get_n_bits, show_n_bits, get_bits_left } from './operate-n-bits';
 import { parse_h2645_common_vui_params } from './parse-h2645-common-vui-params';
 import { getNaluCommonStruct } from './parse-nalu-common';
 
-function decode_hrd_parameters(param: { nalu: number[]; readBitIndex: number; }): Propery[] | -1 {
-  const hrd_parameters: Propery[] = [];
+function decode_hrd_parameters(param: { nalu: number[]; readBitIndex: number; }): Property[] | -1 {
+  const hrd_parameters: Property[] = [];
   const cpb_cnt = get_ue_golomb(param, 'cpb_cnt')
   cpb_cnt.value += 1;
   hrd_parameters.push(cpb_cnt);
@@ -18,7 +18,7 @@ function decode_hrd_parameters(param: { nalu: number[]; readBitIndex: number; })
     return -1;
   }
 
-  const cpr_flag: Omit<Propery, 'value'> & { value: number } = {
+  const cpr_flag: Omit<Property, 'value'> & { value: number } = {
     key: generateUUID(),
     value:  0x0,
     bits: 0,
@@ -51,8 +51,8 @@ function decode_hrd_parameters(param: { nalu: number[]; readBitIndex: number; })
  * @param param nalu: number[]; readBitIndex: number; 注：readBitIndex 开始读取nalu的下标
  * @returns
  */
-function decode_vui_parameters(param: { nalu: number[]; readBitIndex: number; }): Propery[] {
-  let vui_parameters: Propery[] = [];
+function decode_vui_parameters(param: { nalu: number[]; readBitIndex: number; }): Property[] {
+  let vui_parameters: Property[] = [];
 
   const common_vui_parameters = parse_h2645_common_vui_params(param);
   vui_parameters = common_vui_parameters;
@@ -130,13 +130,13 @@ function decode_vui_parameters(param: { nalu: number[]; readBitIndex: number; })
   return vui_parameters;
 }
 
-export function handleSPS(nalu: number[]): Propery[] {
+export function handleSPS(nalu: number[]): Property[] {
   // 从8字节的位置开始读其他的信息，换算成bit位置的话是64
   const params = {
     nalu,
     readBitIndex: 40
   }
-  const seq_parameter_set_data: Propery[] = [
+  const seq_parameter_set_data: Property[] = [
     get_n_bits(params, 8, 'profile_idc'),
     get_n_bits(params, 1, 'constraint_set0_flag'),
     get_n_bits(params, 1, 'constraint_set1_flag'),
@@ -147,7 +147,7 @@ export function handleSPS(nalu: number[]): Propery[] {
     get_n_bits(params, 2, 'reserved_zero_2bits'),
     get_n_bits(params, 8, 'level_idc')
   ];
-  let tempData: Omit<Propery, 'value'> & { value: number };
+  let tempData: Omit<Property, 'value'> & { value: number };
 
   seq_parameter_set_data.push(get_ue_golomb(params, 'seq_parameter_set_id'));
 
@@ -162,7 +162,7 @@ export function handleSPS(nalu: number[]): Propery[] {
       seq_parameter_set_data.push(tempData);
       // chroma_format_idc === 3
       if (tempData.value === 3) {
-        seq_parameter_set_data.push(get_n_bits(params, 1, 'separate_colour_plane_flag')); // separate_colour_plane_flag
+        seq_parameter_set_data.push(get_n_bits(params, 1, 'residual_color_transform_flag')); // residual_color_transform_flag
       }
 
       seq_parameter_set_data.push(get_ue_golomb(params, 'bit_depth_luma_minus8'));
@@ -254,7 +254,7 @@ export function handleSPS(nalu: number[]): Propery[] {
     seq_parameter_set_data.push(get_ue_golomb(params, 'frame_crop_bottom_offset')); 
   }
 
-  let vui_parameters: Propery[] = [];
+  let vui_parameters: Property[] = [];
 
   tempData = get_n_bits(params, 1, 'vui_parameters_present_flag');
   seq_parameter_set_data.push(tempData);

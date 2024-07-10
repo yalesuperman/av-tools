@@ -8,6 +8,8 @@ import NaluHex from './components/NaluHex';
 import { add_prefix_zero_bit } from "../utils/hadle-binary";
 import { H264AnalyseResult, NaluDataStruct } from '../types/h264-analyse-result';
 import { handleSPS } from "../utils/parse-sps";
+import { ebsp2Rbsp } from '../utils/ebsp-to-rbsp';
+import { getSlicePictType } from "../utils/parse-slice";
 
 const { Dragger } = Upload;
 
@@ -35,11 +37,20 @@ export default function AnalyseMp4() {
       const hex = offset.toString(16).toUpperCase();
       item.offset = `0x${  add_prefix_zero_bit(hex, 16 - hex.length)}`;
       offset += item.nal_size;
+      if (item.nal_type === NalUnitTypes.H264_NAL_SLICE ||
+        item.nal_type === NalUnitTypes.H264_NAL_IDR_SLICE ||
+        item.nal_type === NalUnitTypes.H264_NAL_DPA ||
+        item.nal_type === NalUnitTypes.H264_NAL_DPB ||
+        item.nal_type === NalUnitTypes.H264_NAL_DPC
+      ) {
+        item.pict_type = getSlicePictType(item.data);
+      }
     });
 
     const spsNalu = parseResult.data.find(item => item.nal_type === NalUnitTypes.H264_NAL_SPS);
+    console.log(spsNalu, 'spsNalu')
     if (spsNalu) {
-      setSpsParseResult(handleSPS(spsNalu.data));
+      setSpsParseResult(handleSPS(ebsp2Rbsp(spsNalu.data)));
     }
 
     setH264AnalyseResult(parseResult);
@@ -68,7 +79,13 @@ export default function AnalyseMp4() {
       render: (_: any, row) => NalUnitTypesDescriptionMap[(row.nal_type)]
     },
     {
+      title: 'Pict Type',
+      width: 100,
+      dataIndex: 'pict_type'
+    },
+    {
       title: '操作',
+      width: 150,
       dataIndex: 'operation',
       render: (_: any, row) => {
         return <Button type='link' onClick={() => onViewNALData(row)}>查看NAL数据</Button>
@@ -95,7 +112,7 @@ export default function AnalyseMp4() {
   
   return <div className="analyse-mp4">
     {
-      firstAnalayseFlag && <Dragger className="card-upload" {...uploadProps}>
+      firstAnalayseFlag && <Dragger maxCount={1} className="card-upload" {...uploadProps}>
         <p className="ant-upload-drag-icon">
           <InboxOutlined />
         </p>
@@ -112,7 +129,7 @@ export default function AnalyseMp4() {
         {analyseStatus === 'start' ? '开始解析' : analyseStatus === 'analysing' ? '解析中' : '解析完成'}
       </Button>
       {
-        !firstAnalayseFlag && <Upload showUploadList={false} {...uploadProps}>
+        !firstAnalayseFlag && <Upload maxCount={1} showUploadList={false} {...uploadProps}>
           <Button type="primary" className="reselect-file">重新选择文件</Button>
         </Upload>
       }
@@ -121,7 +138,7 @@ export default function AnalyseMp4() {
       !!h264AnalyseResult?.data?.length && <>
         <Row className="analyse-data-container" gutter={16}>
           <Col span={12}>
-            <Table rowKey='offset' pagination={false} scroll={{ x: 500, y: 400 }} virtual columns={columns} dataSource={h264AnalyseResult.data} size="small" />
+            <Table rowKey='offset' rowClassName={row => `nal_type_${row.nal_type} ${currentNALData.offset === row.offset ? 'selected' : ''}`} pagination={false} scroll={{ x: 500, y: 400 }} virtual columns={columns} dataSource={h264AnalyseResult.data} size="small" />
           </Col>
           <Col className="nalu-tree-container" span={12} style={{color: '#000'}} >
             <NaluTree data={currentNALData} spsParseResult={spsParseResult}/>

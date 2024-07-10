@@ -1,13 +1,13 @@
 import { add_prefix_zero_bit } from './hadle-binary';
 import { generateUUID } from './generate-uuid';
-import { Propery } from '../types/parse-nalu';
+import { Property } from '../types/parse-nalu';
 
 /**
  * 获取0阶无符号指数哥伦布解码值
  * @param param nalu: number[]; readBitIndex: number; 注：readBitIndex 开始读取nalu的下标
  * @returns
  */
-export function get_ue_golomb(param: { nalu: number[]; readBitIndex: number; }, title: string): { value: number } & Omit<Propery, 'value'> {
+export function get_ue_golomb(param: { nalu: number[]; readBitIndex: number; }, title: string): { value: number } & Omit<Property, 'value'> {
   let readBitIndex = param.readBitIndex;
   let i;
   let binaryString = '';
@@ -21,16 +21,10 @@ export function get_ue_golomb(param: { nalu: number[]; readBitIndex: number; }, 
     const tempBinaryString = param.nalu[startBytes + i].toString(2);
     binaryString += add_prefix_zero_bit(tempBinaryString, 8 - tempBinaryString.length);
   }
-  if (title === 'qpprime_y_zero_transform_bypass_flag') {
-    console.log(binaryString, 'binaryString', readBitIndex, 'readBitIndex', remainder)
-  }
+
   // 获取前缀0的个数
   for (i = 0; i < 32 && (binaryString[remainder + i] === '0'); i++) {
     readBitIndex++;
-  }
-
-  if (title === 'qpprime_y_zero_transform_bypass_flag') {
-    console.log(i, 'i')
   }
 
   const codeNum = (1 << i) + parseInt(i === 0? '0' : binaryString.slice(remainder + i + 1, remainder + i + 1 + i), 2) - 1;
@@ -43,7 +37,7 @@ export function get_ue_golomb(param: { nalu: number[]; readBitIndex: number; }, 
     value: codeNum,
     bits: readBitIndex - param.readBitIndex,
     startBytes,
-    variableBits: true
+    descriptor: 'ue(v)'
   }
 
   // 改变param里面的readBitIndex用于接下来字节的读取
@@ -57,7 +51,7 @@ export function get_ue_golomb(param: { nalu: number[]; readBitIndex: number; }, 
  * @param param nalu: number[]; readBitIndex: number; 注：readBitIndex 开始读取nalu的下标
  * @returns
  */
-export function get_ue_golomb_long(param: { nalu: number[]; readBitIndex: number; }, title: string): { value: number } & Omit<Propery, 'value'> {
+export function get_ue_golomb_long(param: { nalu: number[]; readBitIndex: number; }, title: string): { value: number } & Omit<Property, 'value'> {
   let readBitIndex = param.readBitIndex;
   let i;
   let binaryString = '';
@@ -71,16 +65,10 @@ export function get_ue_golomb_long(param: { nalu: number[]; readBitIndex: number
     const tempBinaryString = param.nalu[startBytes + i].toString(2);
     binaryString += add_prefix_zero_bit(tempBinaryString, 8 - tempBinaryString.length);
   }
-  if (title === 'qpprime_y_zero_transform_bypass_flag') {
-    console.log(binaryString, 'binaryString', readBitIndex, 'readBitIndex', remainder)
-  }
+
   // 获取前缀0的个数
   for (i = 0; i < 64 && (binaryString[remainder + i] === '0'); i++) {
     readBitIndex++;
-  }
-
-  if (title === 'qpprime_y_zero_transform_bypass_flag') {
-    console.log(i, 'i')
   }
 
   const codeNum = (1 << i) + parseInt(i === 0? '0' : binaryString.slice(remainder + i + 1, remainder + i + 1 + i), 2) - 1;
@@ -93,7 +81,7 @@ export function get_ue_golomb_long(param: { nalu: number[]; readBitIndex: number
     value: codeNum,
     bits: readBitIndex - param.readBitIndex,
     startBytes,
-    variableBits: true
+    descriptor: 'se(v)'
   }
 
   // 改变param里面的readBitIndex用于接下来字节的读取
@@ -107,7 +95,7 @@ export function get_ue_golomb_long(param: { nalu: number[]; readBitIndex: number
  * @param param nalu: number[]; readBitIndex: number; 注：readBitIndex 开始读取nalu的下标
  * @returns
  */
-export function get_se_golomb(param: { nalu: number[]; readBitIndex: number; }, title: string): Omit<Propery, 'value'> & { value: number } {
+export function get_se_golomb(param: { nalu: number[]; readBitIndex: number; }, title: string): Omit<Property, 'value'> & { value: number } {
   let readBitIndex = param.readBitIndex;
   let i;
   let binaryString = '';
@@ -117,17 +105,15 @@ export function get_se_golomb(param: { nalu: number[]; readBitIndex: number; }, 
   for (i = 0; i < readByteNum; i++) {
     // 判断是否数组读取已经超出了数组的大小
     if ((startBytes + i) >= param.nalu.length) break;
-    
+
     const tempBinaryString = param.nalu[startBytes + i].toString(2);
     binaryString += add_prefix_zero_bit(tempBinaryString, 8 - tempBinaryString.length);
   }
-  console.log(binaryString, 'binaryString')
+
   // 获取前缀0的个数
   for (i = 0; i < 32 && (binaryString[remainder + i] === '0'); i++) {
     readBitIndex++;
   }
-
-  console.log(i, 'i')
 
   const codeNum = (1 << i) + parseInt(i === 0? '0' : binaryString.slice(remainder + i + 1, remainder + i + 1 + i), 2) - 1;
 

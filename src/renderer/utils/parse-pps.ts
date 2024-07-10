@@ -2,20 +2,20 @@
  * 对类型为PPS的NAL Unit的数据进行解析，解析出字节所表示的含义
  */
 import { generateUUID } from './generate-uuid';
-import { Propery } from '../types/parse-nalu';
+import { Property } from '../types/parse-nalu';
 import { get_ue_golomb, get_se_golomb } from './golomb';
 import { get_n_bits, get_bits_left } from './operate-n-bits';
 import { getNaluCommonStruct } from './parse-nalu-common';
 
-function more_rbsp_data_in_pps(sps: Propery[])
+function more_rbsp_data_in_pps(sps: Property[])
 {
-  const profile_idc = (sps[3].children as Propery[])[0].value;
-  const constraint_set0_flag = (sps[3].children as Propery[])[1].value as number;
-  const constraint_set1_flag = (sps[3].children as Propery[])[2].value as number;
-  const constraint_set2_flag = (sps[3].children as Propery[])[3].value as number;
-  const constraint_set3_flag = (sps[3].children as Propery[])[4].value as number;
-  const constraint_set4_flag = (sps[3].children as Propery[])[5].value as number;
-  const constraint_set5_flag = (sps[3].children as Propery[])[6].value as number;
+  const profile_idc = (sps[3].children as Property[])[0].value;
+  const constraint_set0_flag = (sps[3].children as Property[])[1].value as number;
+  const constraint_set1_flag = (sps[3].children as Property[])[2].value as number;
+  const constraint_set2_flag = (sps[3].children as Property[])[3].value as number;
+  const constraint_set3_flag = (sps[3].children as Property[])[4].value as number;
+  const constraint_set4_flag = (sps[3].children as Property[])[5].value as number;
+  const constraint_set5_flag = (sps[3].children as Property[])[6].value as number;
   let constraint_set_flags = 0;
   constraint_set_flags |= constraint_set0_flag << 0;   // constraint_set0_flag
   constraint_set_flags |= constraint_set1_flag << 1;   // constraint_set1_flag
@@ -33,16 +33,16 @@ function more_rbsp_data_in_pps(sps: Propery[])
   return 1;
 }
 
-export function handlePPS(nalu: number[], sps: Propery[]): Propery[] {
+export function handlePPS(nalu: number[], sps: Property[]): Property[] {
   console.log(sps, 3424324234)
   // 从8字节的位置开始读其他的信息，换算成bit位置的话是64
   const params = {
     nalu,
     readBitIndex: 40
   }
-  const pic_parameter_set_data: Propery[] = [];
+  const pic_parameter_set_data: Property[] = [];
 
-  const parseResult: Propery[] = [
+  const parseResult: Property[] = [
     ...getNaluCommonStruct(nalu),
     {
       key: generateUUID(),

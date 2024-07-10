@@ -29,6 +29,30 @@
     & > .ant-col {
       padding: 0 !important;
     }
+    .ant-table {
+      .nal_type_1 {
+        background-color: rgb(201, 253, 232);
+      }
+      .nal_type_5 {
+        background-color: rgb(255, 224, 253);
+      }
+      .nal_type_6 {
+        background-color: rgb(218, 224, 254);
+      }
+      .nal_type_7 {
+        background-color: rgb(255, 226, 216);
+      }
+      .nal_type_8 {
+        background-color: rgb(252, 203, 255);
+      }
+      .ant-table-row {
+        &.selected {
+          .ant-table-cell {
+            background-color: #fb9106;
+          }
+        }
+      }
+    }
     .nalu-tree-container {
       border-left: 2px solid #f1f1f1;
     }

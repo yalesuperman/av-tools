@@ -1,0 +1,29 @@
+.ant-table {
+  .ant-table-row {
+    line-height: initial;
+  }
+  .ant-table-cell {
+    padding: 4px !important;
+    font-size: 12px;
+    .ant-btn {
+      padding: 0 !important;
+      height: auto !important;
+      &.ant-btn-link {
+        color: #0262e8;
+        font-size: 12px;
+      }
+    }
+  }
+  .ant-table-header {
+    .ant-table-cell {
+      padding: 6px 4px !important;
+    }
+  }
+  .ant-table-tbody {
+    .ant-table-cell {
+      display: flex;
+      align-items: center;
+      border-color: #333;
+    }
+  }
+}
