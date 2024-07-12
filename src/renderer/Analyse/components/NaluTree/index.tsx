@@ -1,5 +1,5 @@
 import { Tree } from 'antd';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { NalUnitTypes } from '../../../types/nal-unit-types';
 import { handleSPS } from '../../../utils/parse-sps';
 import { handlePPS } from '../../../utils/parse-pps';
@@ -14,10 +14,12 @@ import { handleSlice } from '../../../utils/parse-slice';
 interface Props {
   data: NaluDataStruct,
   spsParseResult: Property[];
+  ppsParseResult: Property[];
+  onSelectNalTreeItem: (selectedNalTreeItem: Property | undefined) => void;
 }
 
 export default function NaluTree(props: Props) {
-  const { data, spsParseResult } = props;
+  const { data, spsParseResult, ppsParseResult, onSelectNalTreeItem } = props;
 
   const treeData: any[] = useMemo(() => {
     let temp: any = [];
@@ -37,20 +39,24 @@ export default function NaluTree(props: Props) {
       case NalUnitTypes.H264_NAL_DPA:
       case NalUnitTypes.H264_NAL_DPB:
       case NalUnitTypes.H264_NAL_DPC:
-        temp = handleSlice(rbspData, spsParseResult);
+        temp = handleSlice(rbspData, spsParseResult, ppsParseResult);
         break;
       default:
         temp =  getNaluCommonStruct(rbspData);
     }
     return temp;
-  }, [data.data, data.nal_type, spsParseResult]);
+  }, [data.data, data.nal_type, ppsParseResult, spsParseResult]);
 
-  const onSelect = useCallback(() => {
-    console.log('onSelect');
-  }, []);
+  const onSelect = useCallback((_selectedKeys: any, { selectedNodes }: any) => {
+    onSelectNalTreeItem(selectedNodes[0])
+  }, [onSelectNalTreeItem]);
+
+  useEffect(() => {
+    onSelectNalTreeItem(undefined);
+  }, [onSelectNalTreeItem, data]);
 
   return <div className='nal-struct-container'>
-    <p className="nal-struct-title">NAL</p>
+    <p className="nal-struct-title">NAL {data.offset}</p>
     <Tree
       showLine
       showIcon={false}
@@ -59,7 +65,13 @@ export default function NaluTree(props: Props) {
       onSelect={onSelect}
       titleRender={(treeNodeProps) => <div className='tree-node-item'>
         <span>{treeNodeProps.title}</span>
-        <span>{treeNodeProps.bits !== 'N/A' && ` ${treeNodeProps.value} (${treeNodeProps.descriptor? `${treeNodeProps.descriptor} ` : ''}${treeNodeProps.bits} bits)`}</span>
+        {
+          treeNodeProps.bits !== 'N/A' && <div style={{ minWidth: 120, display: 'flex', justifyContent: 'space-between' }}>
+          <span>{treeNodeProps.value}</span>
+          <span>{` (${treeNodeProps.descriptor? `${treeNodeProps.descriptor} ` : ''}${treeNodeProps.bits} bits)`}</span>
+        </div>
+        }
+        
       </div>}
       treeData={treeData}
     />

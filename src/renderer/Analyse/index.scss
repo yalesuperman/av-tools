@@ -22,12 +22,21 @@
       margin-bottom: 36px;
     }
   }
-  .analyse-data-container {
+  .table-and-tree-container {
     border: 2px solid #f1f1f1;
     padding-left: 16px;
     padding-right: 16px;
     & > .ant-col {
       padding: 0 !important;
+      max-width: unset;
+      min-width: unset;
+      &:first-of-type {
+        flex: none;
+        width: 900px;
+      }
+      &:last-of-type {
+        flex: 1;
+      }
     }
     .ant-table {
       .nal_type_1 {

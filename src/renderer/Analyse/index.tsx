@@ -10,27 +10,32 @@ import { H264AnalyseResult, NaluDataStruct } from '../types/h264-analyse-result'
 import { handleSPS } from "../utils/parse-sps";
 import { ebsp2Rbsp } from '../utils/ebsp-to-rbsp';
 import { getSlicePictType } from "../utils/parse-slice";
+import { handlePPS } from "../utils/parse-pps";
+import { Property } from "../types/parse-nalu";
 
 const { Dragger } = Upload;
+
+const initCurrentNALData = {
+  offset: '',
+  nal_type: 0,
+  data: [],
+  nal_size: 0
+}
 
 export default function AnalyseMp4() {
   const [fileList, setFileList] = useState<any[]>([]);
   const [h264AnalyseResult, setH264AnalyseResult] = useState<H264AnalyseResult>();
   const [analyseStatus, setAnalyseStatus] = useState<'start' | 'analysing' | 'done'>();
-  const [currentNALData, setCurrentNALData] = useState<NaluDataStruct>({
-    offset: '',
-    nal_type: 0,
-    data: [],
-    nal_size: 0
-  });
+  const [currentNALData, setCurrentNALData] = useState<NaluDataStruct>(initCurrentNALData);
   const [firstAnalayseFlag, setFirstAnalayseFlag] = useState<boolean>(true);
-  const [spsParseResult, setSpsParseResult] = useState<any>()
+  const [spsParseResult, setSpsParseResult] = useState<any>();
+  const [ppsParseResult, setPPSParseResult] = useState<any>();
+  const [selectedNalTreeItem, setselectedNalTreeItem] = useState<Property | undefined>(undefined);
 
   const onStartAnalyse = useCallback(async () => {
     setAnalyseStatus('analysing');
     const reslut = await window.ffmpeg.analyseMp4(fileList[0].path);
     const parseResult: H264AnalyseResult = JSON.parse(reslut);
-
     console.log('h264AnalyseResult',parseResult);
     let offset = 0;
     parseResult.data.forEach(item => {
@@ -45,21 +50,27 @@ export default function AnalyseMp4() {
       ) {
         item.pict_type = getSlicePictType(item.data);
       }
+      
     });
 
     const spsNalu = parseResult.data.find(item => item.nal_type === NalUnitTypes.H264_NAL_SPS);
     console.log(spsNalu, 'spsNalu')
     if (spsNalu) {
-      setSpsParseResult(handleSPS(ebsp2Rbsp(spsNalu.data)));
+      const spsTreeData = handleSPS(ebsp2Rbsp(spsNalu.data));
+      const ppsNalu = parseResult.data.find(item => item.nal_type === NalUnitTypes.H264_NAL_PPS);
+      if (ppsNalu) {
+        setPPSParseResult(handlePPS(ebsp2Rbsp(ppsNalu.data), spsTreeData));
+      }
+      setSpsParseResult(spsTreeData);
     }
-
+    
     setH264AnalyseResult(parseResult);
+    setCurrentNALData(parseResult.data[0])
     setAnalyseStatus('done');
     setFirstAnalayseFlag(false);
   }, [fileList])
 
   const onViewNALData = useCallback((NALData: NaluDataStruct) => {
-    console.log(NALData);
     setCurrentNALData(NALData);
   }, [])
 
@@ -67,9 +78,10 @@ export default function AnalyseMp4() {
     {
       title: 'Offset',
       dataIndex: 'offset',
+      width: 180
     },
     {
-      title: 'NAL大小',
+      title: 'NAL字节数',
       width: 100,
       dataIndex: 'nal_size',
     },
@@ -108,6 +120,10 @@ export default function AnalyseMp4() {
   useEffect(() => {
     setAnalyseStatus('start');
   }, [fileList])
+
+   const onSelectNalTreeItem = useCallback((selectedItem: Property | undefined) => {
+    setselectedNalTreeItem(selectedItem);
+   }, [])
   
   
   return <div className="analyse-mp4">
@@ -136,15 +152,23 @@ export default function AnalyseMp4() {
     </div>
     {
       !!h264AnalyseResult?.data?.length && <>
-        <Row className="analyse-data-container" gutter={16}>
+        <Row className="table-and-tree-container" gutter={16}>
           <Col span={12}>
-            <Table rowKey='offset' rowClassName={row => `nal_type_${row.nal_type} ${currentNALData.offset === row.offset ? 'selected' : ''}`} pagination={false} scroll={{ x: 500, y: 400 }} virtual columns={columns} dataSource={h264AnalyseResult.data} size="small" />
+            <Table
+              rowKey='offset'
+              rowClassName={row => `nal_type_${row.nal_type} ${currentNALData.offset === row.offset ? 'selected' : ''}`}
+              pagination={false} scroll={{ x: 500, y: 400 }}
+              virtual
+              columns={columns}
+              dataSource={h264AnalyseResult.data}
+              size="small"
+            />
           </Col>
           <Col className="nalu-tree-container" span={12} style={{color: '#000'}} >
-            <NaluTree data={currentNALData} spsParseResult={spsParseResult}/>
+            <NaluTree data={currentNALData} spsParseResult={spsParseResult} ppsParseResult={ppsParseResult} onSelectNalTreeItem={onSelectNalTreeItem}/>
           </Col>
         </Row>
-        <NaluHex data={currentNALData}/>
+        <NaluHex data={currentNALData} selectedNalTreeItem={selectedNalTreeItem} h264AnalyseResult={h264AnalyseResult}/>
       </>
     }
   </div>

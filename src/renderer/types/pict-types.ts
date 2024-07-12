@@ -14,7 +14,7 @@ export enum  PictureTypes {
   AV_PICTURE_TYPE_BI,    // < BI type
 }
 
-export const pictureTypesMap = {
+export const pictureTypesMap: Record<number, string> = {
   1: 'I',
   2: 'P',
   3: "B",
@@ -24,4 +24,10 @@ export const pictureTypesMap = {
   7: "BI"
 }
 
-export const ff_h264_golomb_to_pict_type = ['P', 'B', 'I', 'SP', 'SI'];
+export const ff_h264_golomb_to_pict_type = [
+  PictureTypes.AV_PICTURE_TYPE_P,
+  PictureTypes.AV_PICTURE_TYPE_B,
+  PictureTypes.AV_PICTURE_TYPE_I,
+  PictureTypes.AV_PICTURE_TYPE_SP,
+  PictureTypes.AV_PICTURE_TYPE_SI
+];

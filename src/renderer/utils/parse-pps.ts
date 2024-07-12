@@ -71,12 +71,12 @@ export function handlePPS(nalu: number[], sps: Property[]): Property[] {
     return parseResult;
   }
 
-  const num_ref_idx_10_default_active_minus1 = get_ue_golomb(params, 'num_ref_idx_10_default_active_minus1');
-  pic_parameter_set_data.push(num_ref_idx_10_default_active_minus1);
-  const num_ref_idx_11_default_active_minus1 = get_ue_golomb(params, 'num_ref_idx_10_default_active_minus1');
-  pic_parameter_set_data.push(num_ref_idx_11_default_active_minus1);
+  const num_ref_idx_l0_active_minus1 = get_ue_golomb(params, 'num_ref_idx_l0_active_minus1');
+  pic_parameter_set_data.push(num_ref_idx_l0_active_minus1);
+  const num_ref_idx_l1_active_minus1 = get_ue_golomb(params, 'num_ref_idx_l1_active_minus1');
+  pic_parameter_set_data.push(num_ref_idx_l1_active_minus1);
 
-  if (num_ref_idx_10_default_active_minus1.value > 31 - 1 || num_ref_idx_11_default_active_minus1.value > 32 - 1) {
+  if (num_ref_idx_l0_active_minus1.value > 31 - 1 || num_ref_idx_l1_active_minus1.value > 32 - 1) {
     return parseResult;
   }
 

@@ -7,6 +7,18 @@ import { generateUUID } from "./generate-uuid";
 import { add_prefix_zero_bit } from "./hadle-binary";
 
 /**
+ * 跳过n个字节的读取
+ * @param param nalu: number[]; readByteIndex: number; 注：readByteIndex 开始读取nalu的下标
+ * @param n 跳过的位数
+ * @returns
+ */
+export function skip_n_bytes(param: { nalu: number[]; readByteIndex: number; }, n: number) {
+  // 改变param里面的readByteIndex用于接下来字节的读取
+  param.readByteIndex += n;
+
+}
+
+/**
  * 查看剩余的bytes还有多少
  * @param param nalu: number[]; readByteIndex: number; 注：readByteIndex 开始读取nalu的下标
  * @returns

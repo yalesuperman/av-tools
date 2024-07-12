@@ -10,15 +10,14 @@
     border-bottom: 2px solid #f1f1f1;
     padding: 0 12px;
     span {
-      width: 50px;
+      width: 44px;
       display: inline-block;
       &:first-of-type {
-        width: 62px;
+        width: 202px;
       }
     }
   }
   .naldata-area-container {
-    padding: 0 12px;
     .naldata-row-title {
       display: inline-block;
       width: 35px;
@@ -32,19 +31,29 @@
     }
     .naldata-content {
       display: inline-block;
-      width: 900px;
+      width: 913px;
       .naldata-row-content {
         line-height: 20px;
+        border-bottom: 1px solid #f3f3f3;
         &:nth-of-type(2n) {
-          background-color: #f3f3f3;
+          background: linear-gradient(to right, #fff, #fff 210px, #f3f3f3 210px , #f3f3f3 913px, #fff 913px, #fff);
         }
         span {
-          width: 50px;
+          width: 44px;
+          box-sizing: border-box;
+          padding-left: 4px;
           display: inline-block;
+          &.current-nal-data {
+            background-color: #effcdb;
+            &.selectedByte {
+              background-color: #f5655a;
+            }
+          }
         }
         .row-title {
           padding-left: 12px;
-          width: 35px;
+          width: 194px;
+          font-size: 14px;
           border-right: 2px solid #f1f1f1;
           margin-right: 15px;
           background-color: #fff;

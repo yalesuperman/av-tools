@@ -30,7 +30,8 @@ module.exports = {
     "no-nested-ternary": "off",
     "no-else-return": "off",
     "one-var": "off",
-    "no-continue": "off"
+    "no-continue": "off",
+    "no-multi-assign": "off"
   },
   parserOptions: {
     ecmaVersion: 2022,

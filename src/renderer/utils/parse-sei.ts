@@ -3,8 +3,15 @@
  */
 import { Property } from '../types/parse-nalu';
 import { getNaluCommonStruct } from './parse-nalu-common';
-import { bytestream2_get_bytes_left, bytestream2_peek_le_n_bits, bytestream2_peek_byte, bytestream2_get_byte, bytestream2_get_string_n_bits } from './operate-bytes';
+import { bytestream2_get_bytes_left, bytestream2_peek_le_n_bits, bytestream2_peek_byte, bytestream2_get_byte, bytestream2_get_string_n_bits, skip_n_bytes } from './operate-bytes';
 import { generateUUID } from './generate-uuid';
+import { SEITypes } from '../types/sei-types';
+
+function decode_picture_timing(params: { nalu: number[]; readByteIndex: number; }): Property[] {
+  const picture_timing: Property[] = [];
+  console.log(params)
+  return picture_timing;
+}
 
 export function handleSEI(nalu: number[]): Property[] {
   // 从8字节的位置开始读其他的信息，换算成bit位置的话是64
@@ -42,7 +49,6 @@ export function handleSEI(nalu: number[]): Property[] {
     let payloadType = 0;
     let payloadSize = 0;
     
-    // debugger;
     console.log(bytestream2_peek_byte(params))
     while(bytestream2_peek_byte(params) === 255) {
       payloadType += bytestream2_get_byte(params, '').value as number;
@@ -55,6 +61,10 @@ export function handleSEI(nalu: number[]): Property[] {
     }
 
     payloadSize += bytestream2_get_byte(params, '').value as number;
+
+    if (payloadType !== 5) {
+      console.log(payloadType, 'type')
+    }
 
     if (payloadType === 5) {
       sei_message.push({
@@ -88,6 +98,17 @@ export function handleSEI(nalu: number[]): Property[] {
         bits: 'N/A',
       });
     }
+
+    // TODO 后续再完善
+    switch(payloadType) {
+      case SEITypes.SEI_TYPE_PIC_TIMING:
+        decode_picture_timing(params);
+        break;
+      default:
+        console.log(12312323);
+    }
+
+    skip_n_bytes(params, payloadSize);
 
   }
 
