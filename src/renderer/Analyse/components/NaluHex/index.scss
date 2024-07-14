@@ -9,6 +9,7 @@
     margin-bottom: 4px;
     border-bottom: 2px solid #f1f1f1;
     padding: 0 12px;
+    font-size: 14px;
     span {
       width: 44px;
       display: inline-block;
@@ -18,17 +19,6 @@
     }
   }
   .naldata-area-container {
-    .naldata-row-title {
-      display: inline-block;
-      width: 35px;
-      vertical-align: top;
-      margin-right: 15px;
-      border-right: 2px solid #f1f1f1;
-      span {
-        display: block;
-        line-height: 20px;
-      }
-    }
     .naldata-content {
       display: inline-block;
       width: 913px;

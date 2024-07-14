@@ -4,38 +4,26 @@
 import { generateUUID } from './generate-uuid';
 import { Property } from '../types/parse-nalu';
 import { get_ue_golomb, get_se_golomb, get_ue_golomb_long } from './golomb';
-import { get_n_bits, show_n_bits, get_bits_left } from './operate-n-bits';
+import { get_n_bits } from './operate-n-bits';
 import { parse_h2645_common_vui_params } from './parse-h2645-common-vui-params';
 import { getNaluCommonStruct } from './parse-nalu-common';
+import { RBSPSyntaxStructureMap } from '../types/nal-unit-types';
 
-function decode_hrd_parameters(param: { nalu: number[]; readBitIndex: number; }): Property[] | -1 {
+function decode_hrd_parameters(param: { nalu: number[]; readBitIndex: number; }): Property[] {
   const hrd_parameters: Property[] = [];
-  const cpb_cnt = get_ue_golomb(param, 'cpb_cnt')
-  cpb_cnt.value += 1;
+  const cpb_cnt = get_ue_golomb(param, 'cpb_cnt_minus1')
+
   hrd_parameters.push(cpb_cnt);
-  if (cpb_cnt.value > 32) {
-    console.error(`cpb ${cpb_cnt.value} invalid.`);
-    return -1;
-  }
 
-  const cpr_flag: Omit<Property, 'value'> & { value: number } = {
-    key: generateUUID(),
-    value:  0x0,
-    bits: 0,
-    startBytes: 'N/A',
-    title: 'cpr_flag'
-  };
-
-  hrd_parameters.push(cpr_flag);
   hrd_parameters.push(get_n_bits(param, 4, 'bit_rate_scale'));
   hrd_parameters.push(get_n_bits(param, 4, 'cpb_size_scale'));
 
   cpb_cnt.children = [];
-  console.log(cpb_cnt.value, 'cpb_cnt.value')
+
   for (let i = 0; i < cpb_cnt.value; i++) {
-    cpb_cnt.children.push(get_ue_golomb_long(param, `bit_rate_value_minus1_${i}`));
-    cpb_cnt.children.push(get_ue_golomb_long(param, `cpb_size_value_minus1_${i}`));
-    cpr_flag.value |= get_n_bits(param, 1, '').value << i;
+    cpb_cnt.children.push(get_ue_golomb_long(param, `bit_rate_value_minus1[${i}]`));
+    cpb_cnt.children.push(get_ue_golomb_long(param, `cpb_size_value_minus1[${i}]`));
+    cpb_cnt.children.push(get_n_bits(param, 1, `cbr_flag[${i}]`));
   }
 
   hrd_parameters.push(get_n_bits(param, 5, 'initial_cpb_removal_delay_length_minus1'));
@@ -57,54 +45,34 @@ function decode_vui_parameters(param: { nalu: number[]; readBitIndex: number; })
   const common_vui_parameters = parse_h2645_common_vui_params(param);
   vui_parameters = common_vui_parameters;
 
-  if (show_n_bits(param, 1) && get_bits_left(param) < 10) {
-    console.error('Truncated VUI %d', get_bits_left(param));
-    return vui_parameters;
-  }
-
   const timing_info_present_flag = get_n_bits(param, 1, 'timing_info_present_flag');
   vui_parameters.push(timing_info_present_flag);
   timing_info_present_flag.children = [];
 
   if (timing_info_present_flag.value) {
-    const num_units_in_tick = get_n_bits(param, 32, 'num_units_in_tick');
-    const time_scale = get_n_bits(param, 32, 'time_scale');
-    if (!num_units_in_tick.value || !time_scale.value) {
-      console.error(`time_scale/num_units_in_tick invalid or unsupported ${time_scale.value}/${num_units_in_tick.value}`);
-      timing_info_present_flag.value = 0;
-    } else {
-      timing_info_present_flag.children.push(num_units_in_tick);
-      timing_info_present_flag.children.push(time_scale);
-    }
+    timing_info_present_flag.children.push(get_n_bits(param, 32, 'num_units_in_tick'));
+    timing_info_present_flag.children.push(get_n_bits(param, 32, 'time_scale'));
     timing_info_present_flag.children.push(get_n_bits(param, 1, 'fixed_frame_rate_flag'));
   }
 
   const nal_hrd_parameters_present_flag = get_n_bits(param, 1, 'nal_hrd_parameters_present_flag');
   vui_parameters.push(nal_hrd_parameters_present_flag);
-  if (nal_hrd_parameters_present_flag.value) {
-    const hrd_parameters  = decode_hrd_parameters(param);
-    if (hrd_parameters === -1) return vui_parameters;
-    else nal_hrd_parameters_present_flag.children = hrd_parameters;
-  };
+  if (nal_hrd_parameters_present_flag.value) 
+    nal_hrd_parameters_present_flag.children = decode_hrd_parameters(param);
 
   const vcl_hrd_parameters_present_flag = get_n_bits(param, 1, 'vcl_hrd_parameters_present_flag');
   vui_parameters.push(vcl_hrd_parameters_present_flag);
-  if (vcl_hrd_parameters_present_flag.value) {
-    const hrd_parameters  = decode_hrd_parameters(param);
-    if (hrd_parameters === -1) return vui_parameters;
-    else vcl_hrd_parameters_present_flag.children = hrd_parameters;
-  }
+  if (vcl_hrd_parameters_present_flag.value)
+    vcl_hrd_parameters_present_flag.children = decode_hrd_parameters(param);
 
   if (nal_hrd_parameters_present_flag.value || vcl_hrd_parameters_present_flag.value)
     vui_parameters.push(get_n_bits(param, 1, 'low_delay_hrd_flag'));
 
   vui_parameters.push(get_n_bits(param, 1, 'pic_struct_present_flag'));
 
-  console.log('get_bits_left(param)', get_bits_left(param))
-  if (!get_bits_left(param)) return vui_parameters;
-
   const bitstream_restriction_flag = get_n_bits(param, 1, 'bitstream_restriction_flag');
   vui_parameters.push(bitstream_restriction_flag);
+
   if (bitstream_restriction_flag.value) {
     bitstream_restriction_flag.children = [];
     bitstream_restriction_flag.children.push(get_n_bits(param, 1, 'motion_vectors_over_pic_boundaries_flag'));
@@ -112,19 +80,8 @@ function decode_vui_parameters(param: { nalu: number[]; readBitIndex: number; })
     bitstream_restriction_flag.children.push(get_ue_golomb(param, 'max_bits_per_mb_denom'));
     bitstream_restriction_flag.children.push(get_ue_golomb(param, 'log2_max_mv_length_horizontal'));
     bitstream_restriction_flag.children.push(get_ue_golomb(param, 'log2_max_mv_length_vertical'));
-
-    const num_reorder_frames = get_ue_golomb(param, 'num_reorder_frames');
-    bitstream_restriction_flag.children.push(num_reorder_frames);
+    bitstream_restriction_flag.children.push(get_ue_golomb(param, 'max_num_reorder_frames'));
     bitstream_restriction_flag.children.push(get_ue_golomb(param, 'max_dec_frame_buffering'));
-
-    if (get_bits_left(param) < 0) {
-      num_reorder_frames.value = 0;
-      bitstream_restriction_flag.value = 0;
-    }
-
-    if (num_reorder_frames.value > 16) {
-      num_reorder_frames.value = 16;
-    }
   }
 
   return vui_parameters;
@@ -136,6 +93,7 @@ export function handleSPS(nalu: number[]): Property[] {
     nalu,
     readBitIndex: 40
   }
+  const nal_unit_type = nalu[4] & 0x1f;
   const seq_parameter_set_data: Property[] = [
     get_n_bits(params, 8, 'profile_idc'),
     get_n_bits(params, 1, 'constraint_set0_flag'),
@@ -157,12 +115,12 @@ export function handleSPS(nalu: number[]): Property[] {
     profile_idc === 122 || profile_idc === 244 || profile_idc ===  44 ||
     profile_idc ===  83 || profile_idc ===  86 || profile_idc === 118 ||
     profile_idc === 128 || profile_idc === 138 || profile_idc === 139 ||
-    profile_idc === 134) {
+    profile_idc === 134 || profile_idc === 135) {
       tempData = get_ue_golomb(params, 'chroma_format_idc');
       seq_parameter_set_data.push(tempData);
-      // chroma_format_idc === 3
+
       if (tempData.value === 3) {
-        seq_parameter_set_data.push(get_n_bits(params, 1, 'residual_color_transform_flag')); // residual_color_transform_flag
+        seq_parameter_set_data.push(get_n_bits(params, 1, 'separate_colour_plane_flag'));
       }
 
       seq_parameter_set_data.push(get_ue_golomb(params, 'bit_depth_luma_minus8'));
@@ -223,7 +181,7 @@ export function handleSPS(nalu: number[]): Property[] {
   if (tempData.value === 0) {
     seq_parameter_set_data.push(get_ue_golomb(params, 'log2_max_pic_order_cnt_lsb_minus4'));
   } else if (tempData.value === 1) {
-      seq_parameter_set_data.push(get_n_bits(params, 1, 'delta_pic_order_always_zero'));
+      seq_parameter_set_data.push(get_n_bits(params, 1, 'delta_pic_order_always_zero_flag'));
       seq_parameter_set_data.push(get_se_golomb(params, 'offset_for_non_ref_pic'));
       seq_parameter_set_data.push(get_se_golomb(params, 'offset_for_top_to_bottom_field'));
 
@@ -275,10 +233,25 @@ export function handleSPS(nalu: number[]): Property[] {
     ...getNaluCommonStruct(nalu),
     {
       key: generateUUID(),
-      title: 'seq_parameter_set_data',
+      title: RBSPSyntaxStructureMap[nal_unit_type],
       startBytes: 5,
       bits: 'N/A',
-      children: seq_parameter_set_data,
-    }
+      children: [
+        {
+          key: generateUUID(),
+          title: 'seq_parameter_set_data',
+          startBytes: 5,
+          bits: 'N/A',
+          children: seq_parameter_set_data,
+        },
+        {
+          key: generateUUID(),
+          title: 'rbsp_trailing_bits',
+          startBytes: Math.floor(params.readBitIndex / 8),
+          bits: 'N/A',
+          children: [],
+        }
+      ],
+    },
   ];
 }

@@ -45,3 +45,15 @@ export function findNALTreeProperty(nalTreeData: Property[], propertyTitle: stri
   }
   return -1;
 }
+
+/**
+ * 根据参数序列集数据得到ChromaArrayType值
+ * @param sps 参数序列集数据
+ * @returns 
+ */
+export function getChromaArrayType(sps: Property[]) {
+  const chroma_format_idc = findNALTreeProperty(sps, 'chroma_format_idc') as Property;
+  const separate_colour_plane_flag = findNALTreeProperty(sps, 'separate_colour_plane_flag');
+  const ChromaArrayType = separate_colour_plane_flag === -1 ? chroma_format_idc.value : separate_colour_plane_flag.value === 0 ? chroma_format_idc.value : 0;
+  return ChromaArrayType;
+}

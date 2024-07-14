@@ -10,6 +10,7 @@ import { NaluDataStruct } from '../../../types/h264-analyse-result';
 import { Property } from '../../../types/parse-nalu';
 import { ebsp2Rbsp } from '../../../utils/ebsp-to-rbsp';
 import { handleSlice } from '../../../utils/parse-slice';
+import { handleSPSExt } from '../../../utils/parse-sps-ext';
 
 interface Props {
   data: NaluDataStruct,
@@ -40,6 +41,9 @@ export default function NaluTree(props: Props) {
       case NalUnitTypes.H264_NAL_DPB:
       case NalUnitTypes.H264_NAL_DPC:
         temp = handleSlice(rbspData, spsParseResult, ppsParseResult);
+        break;
+      case NalUnitTypes.H264_NAL_SPS_EXT:
+        temp = handleSPSExt(rbspData);
         break;
       default:
         temp =  getNaluCommonStruct(rbspData);
