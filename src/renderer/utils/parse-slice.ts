@@ -263,41 +263,8 @@ function parse_dec_ref_pic_marking(params: { nalu: number[]; readBitIndex: numbe
   return dec_ref_pic_marking;
 }
 
-
-export function handleSlice(nalu: number[], sps: Property[], pps: Property[]): Property[] {
-  // 从5字节的位置开始读其他的信息，换算成bit位置的话是40
-  const params = {
-    nalu,
-    readBitIndex: 40
-  }
-
-  const nal_unit_type = nalu[4] & 0x1f;
-
-  const parseResult: Property[] = [
-    ...getNaluCommonStruct(nalu),
-  ];
-
-  const rbsp: Property[] = [];
-
-  parseResult.push({
-    key: generateUUID(),
-    title: RBSPSyntaxStructureMap[nal_unit_type],
-    startBytes: 5,
-    bits: 'N/A',
-    children: rbsp,
-  });
-
-
+function parse_slice_header(params: { nalu: number[]; readBitIndex: number; }, sps: Property[], pps: Property[], nal_unit_type: number, nal_ref_idc: number): Property[] {
   const slice_header: Property[] = [];
-
-  rbsp.push({
-    key: generateUUID(),
-    title: 'slice_header',
-    startBytes: 5,
-    bits: 'N/A',
-    children: slice_header,
-  });
-
   slice_header.push(get_ue_golomb_long(params, 'first_mb_in_slice'))
 
   const slice_type = get_ue_golomb(params, 'slice_type');
@@ -313,7 +280,7 @@ export function handleSlice(nalu: number[], sps: Property[], pps: Property[]): P
   const separate_colour_plane_flag = findNALTreeProperty(sps, 'separate_colour_plane_flag');
 
   if (separate_colour_plane_flag !== -1 && separate_colour_plane_flag.value === 1) 
-    slice_header.push(get_n_bits(params, 2, 'separate_colour_plane_flag'));
+    slice_header.push(get_n_bits(params, 2, 'colour_plane_id'));
   
   const log2_max_frame_num_minus4 = findNALTreeProperty(sps, 'log2_max_frame_num_minus4') as Property;
 
@@ -398,8 +365,6 @@ export function handleSlice(nalu: number[], sps: Property[], pps: Property[]): P
     });
   }
 
-  const  nal_ref_idc = (nalu[4] & 0x60) >> 5;
-
   if (nal_ref_idc !== 0) {
     const dec_ref_pic_marking: Property[] = parse_dec_ref_pic_marking(params, nal_unit_type)
     slice_header.push({
@@ -448,6 +413,78 @@ export function handleSlice(nalu: number[], sps: Property[], pps: Property[]): P
     const SliceGroupChangeRate = (slice_group_change_rate_minus1.value as number) + 1;
     slice_header.push(get_n_bits(params, Math.ceil(Math.log2( PicSizeInMapUnits / SliceGroupChangeRate + 1 ) ), 'slice_group_change_cycle'));
   }
+  return slice_header;
+}
+
+export function handleSlice(nalu: number[], sps: Property[], pps: Property[]): Property[] {
+  // 从5字节的位置开始读其他的信息，换算成bit位置的话是40
+  const params = {
+    nalu,
+    readBitIndex: 40
+  }
+
+  const nal_unit_type = nalu[4] & 0x1f;
+  const nal_ref_idc = (nalu[4] & 0x60) >> 5;
+
+  const parseResult: Property[] = [
+    ...getNaluCommonStruct(nalu),
+  ];
+
+  const rbsp: Property[] = [];
+
+  parseResult.push({
+    key: generateUUID(),
+    title: RBSPSyntaxStructureMap[nal_unit_type],
+    startBytes: 5,
+    bits: 'N/A',
+    children: rbsp,
+  });
+
+  if (nal_unit_type === NalUnitTypes.H264_NAL_DPA || NalUnitTypes.H264_NAL_SLICE) {
+    const slice_header: Property[] = parse_slice_header(params, sps, pps, nal_unit_type, nal_ref_idc);
+  
+    rbsp.push({
+      key: generateUUID(),
+      title: 'slice_header',
+      startBytes: 5,
+      bits: 'N/A',
+      children: slice_header,
+    });
+  }
+
+  if (nal_unit_type === NalUnitTypes.H264_NAL_DPA || nal_unit_type === NalUnitTypes.H264_NAL_DPB || nal_unit_type === NalUnitTypes.H264_NAL_DPC)
+    rbsp.push(get_ue_golomb(params, 'slice_id'));
+
+  if (nal_unit_type === NalUnitTypes.H264_NAL_DPB || nal_unit_type === NalUnitTypes.H264_NAL_DPC) {
+    const separate_colour_plane_flag = findNALTreeProperty(sps, 'separate_colour_plane_flag');
+  
+    if (separate_colour_plane_flag !== -1 && separate_colour_plane_flag.value === 1) 
+      rbsp.push(get_n_bits(params, 2, 'colour_plane_id'));
+
+    const redundant_pic_cnt_present_flag = findNALTreeProperty(pps, 'redundant_pic_cnt_present_flag');
+    if (redundant_pic_cnt_present_flag !== -1 && redundant_pic_cnt_present_flag.value)
+      rbsp.push(get_ue_golomb(params, 'redundant_pic_cnt'));
+
+  }
+
+
+
+  rbsp.push({
+    key: generateUUID(),
+    title: 'slice_data',
+    startBytes: 'N/A',
+    bits: 'N/A',
+    children: [],
+  });
+
+  rbsp.push({
+    key: generateUUID(),
+    title: 'rbsp_slice_trailing_bits',
+    startBytes: 'N/A',
+    bits: 'N/A',
+    children: [],
+  });
+  
 
   return parseResult;
 }
