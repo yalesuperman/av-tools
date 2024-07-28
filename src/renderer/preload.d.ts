@@ -6,6 +6,9 @@ declare global {
     electron: ElectronHandler;
     ffmpeg: {
       analyseMp4: (filePath: string) => any;
+      editMedia: (params: any) => any;
+      selectDirector: () => any,
+      openFinder: (filePath: string) => any
     }
   }
 }

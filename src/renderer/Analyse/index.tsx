@@ -96,6 +96,16 @@ export default function AnalyseMp4() {
       dataIndex: 'pict_type'
     },
     {
+      title: 'Pts',
+      width: 100,
+      dataIndex: 'pts'
+    },
+    {
+      title: 'Dts',
+      width: 100,
+      dataIndex: 'dts'
+    },
+    {
       title: '操作',
       width: 150,
       dataIndex: 'operation',

@@ -13,9 +13,9 @@ export default function Home() {
   
   const menus: MenuType[] = useMemo(() => {
     return [{
-      title: '格式转换',
-      description: '将音视频由一种格式转换成其它的格式，比如：MP4转为MP3',
-      link: '/format-transform'
+      title: '音视频编辑',
+      description: '对音视频进行裁剪、格式转换等编辑操作',
+      link: '/edit-media'
     }, {
       title: 'H264 Viewer',
       description: '对视频中H264数据进行分析',

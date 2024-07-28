@@ -1,0 +1,14 @@
+.edit-media-page {
+  .settings-form {
+    margin-top: 48px;
+  }
+  .generate-file-path {
+    margin-top: 12px;
+    display: flex;
+    align-items: center;
+    .anticon-folder-view {
+      margin-left: 12px;
+      font-size: 24px;
+    }
+  }
+}

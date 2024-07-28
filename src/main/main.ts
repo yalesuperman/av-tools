@@ -15,6 +15,9 @@ import log from 'electron-log';
 import MenuBuilder from './menu';
 import { resolveHtmlPath } from './util';
 import { bindHandle as bindMp4Handle } from './analyse-mp4';
+import { bindHandle as bindEditMediaHandle } from './edit-media';
+import { bindHandle as bindSelectDirectorHandle } from './select-director';
+import { bindHandle as bindOpenFinderHandle } from './open-finder';
 
 class AppUpdater {
   constructor() {
@@ -27,6 +30,9 @@ class AppUpdater {
 let mainWindow: BrowserWindow | null = null;
 
 bindMp4Handle();
+bindEditMediaHandle();
+bindSelectDirectorHandle();
+bindOpenFinderHandle();
 
 if (process.env.NODE_ENV === 'production') {
   const sourceMapSupport = require('source-map-support');
@@ -68,8 +74,9 @@ const createWindow = async () => {
 
   mainWindow = new BrowserWindow({
     show: false,
-    width: 1024,
-    height: 728,
+    // width: 1024,
+    // height: 728,
+    fullscreen: true,
     icon: getAssetPath('icon.png'),
     webPreferences: {
       preload: app.isPackaged

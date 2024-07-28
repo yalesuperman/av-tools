@@ -1,0 +1,14 @@
+.edit-media-page {
+  padding: 24px 12px 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  .upload-container {
+    display: flex;
+    justify-content: center;
+    .ant-upload-wrapper {
+      width: 500px;
+      display: block;
+    }
+  }
+}

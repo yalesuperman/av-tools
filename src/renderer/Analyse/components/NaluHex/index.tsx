@@ -52,7 +52,7 @@ export default function NaluHex (props: Props) {
       // 需要从上一个NAL单元里面获取的字节数量
       const prevNum = parseInt(data.offset, 16) % 16;
       // 需要从下一个NAL单元里面获取的字节数量
-      const nextNum = 16 - (data.nal_size % 16);
+      const nextNum = 16 - ((data.nal_size + prevNum) % 16);
       const index = h264AnalyseResult.data.findIndex((item) => item.offset === data.offset);
       let tempBytes: number[] = [];
       if (index > 0)

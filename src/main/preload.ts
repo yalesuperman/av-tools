@@ -27,7 +27,10 @@ const electronHandler = {
 contextBridge.exposeInMainWorld('electron', electronHandler);
 
 contextBridge.exposeInMainWorld('ffmpeg', {
-  analyseMp4: (filePath: string) => ipcRenderer.invoke('analyseMp4', filePath)
+  analyseMp4: (filePath: string) => ipcRenderer.invoke('analyseMp4', filePath),
+  editMedia: (params: any) => ipcRenderer.invoke('editMedia', params),
+  selectDirector: () => ipcRenderer.invoke('selectDirector'),
+  openFinder: (filePath: string) => ipcRenderer.invoke('openFinder', filePath)
 })
 
 export type ElectronHandler = typeof electronHandler;
